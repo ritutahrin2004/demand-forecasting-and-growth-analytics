@@ -1,0 +1,162 @@
+## Data Ingestion & Raw Schema Setup
+
+### Overview
+As the first step of this project, I manually created a dedicated PostgreSQL schema named: grocery_growth_analytics
+
+
+This schema is used to store **raw, untransformed source data** exactly as received, prior to any cleaning, normalization, or analytical modeling.
+
+The goal of this layer is to:
+- Preserve original data fidelity
+- Avoid premature assumptions during ingestion
+- Create a stable foundation for downstream staging, dimension, and fact tables
+
+---
+
+### Raw Data Import Strategy
+
+All raw datasets were imported into PostgreSQL as individual tables under the `grocery_growth_analytics` schema.
+
+**Key design decision:**
+> All columns were initially stored as `TEXT`.
+
+#### Rationale
+The raw datasets contain:
+- Inconsistent data types across files
+- Mixed representations of numeric fields
+- Non-standard encodings (e.g., symbols, icons, free-text fields)
+- Fields whose correct type depends on business interpretation
+
+By storing all fields as text at ingestion time:
+- No information is lost due to failed casts
+- Data quality issues remain visible instead of being silently coerced
+- Type enforcement is deferred to the staging layer, where rules are explicit and auditable
+
+This approach follows standard analytics engineering practice:  
+**raw → staging → modeled**, rather than attempting to “clean on load”.
+
+---
+
+### Raw Tables Imported
+
+Based on the project definition, the following raw tables were created and populated:
+
+#### 1. Orders
+Captures order-level transactional data.
+- `order_id`
+- `customer_id`
+- `store_id`
+- `order_date`
+- `order_total`
+- `payment_method`
+- `delivery_partner_id`
+- `promised_delivery_time`
+- `actual_delivery_time`
+
+---
+
+#### 2. Order Items
+Captures product-level details for each order.
+- `order_id`
+- `product_id`
+- `quantity`
+- `unit_price`
+
+---
+
+#### 3. Products
+Contains product master data.
+- `product_id`
+- `product_name`
+- `category`
+- `brand`
+- `mrp`
+- `margin`
+- `shelf_life_days`
+- `min_stock_level`
+- `max_stock_level`
+
+---
+
+#### 4. Customers
+Contains customer-level attributes.
+- `customer_id`
+- `customer_name`
+- `registration_date`
+- `customer_segment`
+- `pincode`
+- `area`
+
+---
+
+#### 5. Inventory
+Daily inventory movement data.
+- `product_id`
+- `date`
+- `stock_received`
+- `damaged_stock`
+
+---
+
+#### 6. Inventory (New Extract)
+A newer inventory extract with similar structure, ingested separately to avoid accidental duplication.
+- `product_id`
+- `date`
+- `stock_received`
+- `damaged_stock`
+
+---
+
+#### 7. Marketing Performance
+Campaign-level daily marketing metrics.
+- `campaign_id`
+- `date`
+- `impressions`
+- `clicks`
+- `conversions`
+- `spend`
+- `revenue_generated`
+- `roas`
+
+---
+
+#### 8. Delivery Performance
+Operational delivery metrics at the order level.
+- `order_id`
+- `delivery_partner_id`
+- `promised_time`
+- `actual_time`
+- `delivery_time_minutes`
+- `distance_km`
+- `delivery_status`
+- `reasons_if_delayed`
+
+---
+
+#### 9. Customer Feedback
+Post-order customer feedback and sentiment.
+- `feedback_id`
+- `order_id`
+- `customer_id`
+- `rating`
+- `sentiment`
+- `feedback_category`
+- `feedback_date`
+
+---
+
+### Current Status
+- PostgreSQL schema created manually
+- All raw datasets successfully imported
+- No transformations applied at this stage
+- Data types intentionally left as `TEXT`
+
+The next step in the pipeline is the creation of **staging tables**, where:
+- Data types will be standardized
+- Null handling and validation rules will be applied
+- Grain inconsistencies will be resolved explicitly
+
+---
+
+### Notes
+This repository intentionally documents intermediate steps (not just final outputs) to reflect a realistic analytics workflow and to make modeling decisions transparent and reproducible.
